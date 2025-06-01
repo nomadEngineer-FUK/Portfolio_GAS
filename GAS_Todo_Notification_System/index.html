@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin-top: 60px;
+      }
+
+      h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      #progress-bar {
+        width: 60%;
+        height: 30px;
+        background-color: #e0e0e0;
+        margin: 0 auto;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+      }
+
+      #progress {
+        height: 100%;
+        background-color: #4caf50;
+        color: white;
+        text-align: right;
+        line-height: 30px;
+        padding-right: 10px;
+        border-radius: 15px 0 0 15px;
+        transition: width 0.5s;
+      }
+
+      #stage {
+        margin-top: 20px;
+        font-size: 18px;
+        font-weight: bold;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  </head>
+  <body>
+    <h1>Progress Tracker</h1>
+
+    <div id="progress-bar">
+      <div id="progress" style="width: 0%">0%</div>
+    </div>
+
+    <div id="stage">Current Stage: Loading...</div>
+
+    <!-- 
+       現在のステータスを写真で表示していますが、ここではコメントアウトしています
+       本来の業務目的の機能ではなく、モチベーション維持のための要素をイメージしました
+     -->
+    <img id="stage-image" src="" alt="Stageに応じた写真を掲載できます" style="max-width: 80%; border-radius: 10px; margin-top: 20px;" />
+
+    <script>
+      function updateProgress() {
+        google.script.run.withSuccessHandler(function(data) {
+          const progress = data.progress;
+
+          const progressEl = document.getElementById("progress");
+          const stageEl = document.getElementById("stage");
+          const stageImageEl = document.getElementById("stage-image");
+
+          progressEl.style.width = progress + "%";
+          progressEl.textContent = progress + "%";
+
+          const stageKey = data.stageKey;
+          const displayStage = data.displayStage;
+
+          stageEl.textContent = "Current Location: " + displayStage;
+          const stageToImageMap = {
+            "Stage 1": "Picture for stage 1",
+            "Stage 2": "Picture for stage 2",
+            "Stage 3": "Picture for stage 3",
+            "Stage 4": "Picture for stage 4",
+            "Complete": "Picture for completion",
+          };
+          
+
+          const imageUrl = stageToImageMap[stageKey];
+          stageImageEl.src = imageUrl || "";
+          stageImageEl.alt = imageUrl + '. ポートフォリオ用に写真は非表示'; // ポートフォリオ用に追加
+
+          // クラッカー演出
+          if (progress >= 95) {
+            confetti({
+              particleCount: 150,
+              spread: 100,
+              origin: { y: 0.6 }
+            });
+          }
+        }).getProgressData();
+      }
+    </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        updateProgress();
+      });
+    </script>
+  </body>
+</html>
