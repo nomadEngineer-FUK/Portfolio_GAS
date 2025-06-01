@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        width: 80%;
+        margin: 0 auto;
+        color: #333;
+      }
+      h1 {
+        color: #1a73e8; /* Google Blue */
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      h2 {
+        color: #00796b;
+        border-bottom: 2px solid #00796b;
+        padding-bottom: 5px;
+        margin-top: 20px;
+        font-size: 1.2em;
+      }
+      .chart-container {
+        margin-bottom: 30px;
+        border: 1px solid #ddd;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+      }
+      #line_chart_div, #column_chart_div, #pie_chart_div {
+        width: 100%;
+        height: 300px;
+      }
+      .error-message {
+        color: red;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>売上分析グラフ</h1>
+
+    <div class="chart-container">
+      <h2>カテゴリ別 月次売上推移</h2>
+      <div id="line_chart_div"></div>
+    </div>
+
+    <div class="chart-container">
+      <h2>販売経路別 カテゴリ構成</h2>
+      <div id="column_chart_div"></div>
+    </div>
+
+    <div class="chart-container">
+      <h2>法人／個人売上比率</h2>
+      <div id="pie_chart_div"></div>
+    </div>
+
+    <script>
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(initializeCharts);
+
+      function initializeCharts() {
+        drawLineChart();
+        drawColumnChart();
+        drawPieChart();
+      }
+
+      // エラーハンドラー
+      function handleFailure(error, elementId) {
+        document.getElementById(elementId).innerText = 'グラフの読み込みに失敗しました: ' + error.message;
+        console.error('グラフエラー:', error);
+      }
+
+      function drawLineChart() {
+        google.script.run
+          .withSuccessHandler(function(data) {
+            console.log('drawLineChart: Received data from GAS:', JSON.parse(JSON.stringify(data)));
+
+            if (!data || data.length < 2 || (data.length > 1 && data[1].length === 0) ) {
+              document.getElementById('line_chart_div').innerText = 'データがありません。(詳細チェック)';
+              console.warn('drawLineChart: No data or insufficient data rows received.');
+              return;
+            }
+
+            try {
+              const dataTable = google.visualization.arrayToDataTable(data);
+              console.log('drawLineChart: DataTable created successfully.');
+
+              const options = {
+                title: 'カテゴリ別 月次売上合計の推移',
+                curveType: 'function',
+                legend: { position: 'bottom' },
+                chartArea: {
+                  left: 100,    // Y軸ラベル等
+                  right: 50,   // 右の余白 
+                  top: 30,     // タイトル
+                  bottom: 80,  // X軸ラベルと凡例のため 
+                  width: '80%', // グラフ本体の幅 
+                  height: '60%' // グラフ本体の高さ 
+                },
+                hAxis: {
+                  title: '年月',
+                  slantedText: true,
+                  slantedTextAngle: -15,
+                  showTextEvery: 3
+                },
+                vAxis: {
+                  title: '売上合計',
+                  format: '¥#,##0',
+                  viewWindow: {
+                    min: 0 // Y軸の表示最小値
+                  }
+                },
+                tooltip: { isHtml: true },
+                colors: ['#3366CC', '#DC3912', '#FF9900', '#109618', '#990099']
+              };
+
+              const chart = new google.visualization.LineChart(document.getElementById('line_chart_div'));
+
+              google.visualization.events.addListener(chart, 'error', function (err) {
+                console.error('drawLineChart: Google Chart Error:', err.id, err.message, err.detailedMessage);
+                document.getElementById('line_chart_div').innerText = 'グラフ描画エラー: ' + err.message;
+              });
+
+              chart.draw(dataTable, options);
+              console.log('drawLineChart: Chart.draw() called.');
+
+            } catch (e) {
+              console.error('drawLineChart: Error processing data or drawing chart:', e);
+              document.getElementById('line_chart_div').innerText = 'グラフ準備中にエラー: ' + e.message;
+            }
+          })
+          .withFailureHandler(error => {
+            console.error('drawLineChart: google.script.run failure:', error);
+            handleFailure(error, 'line_chart_div');
+          })
+          .getSalesChannelByMonthData();
+      }
+
+      function drawColumnChart() {
+        google.script.run
+          .withSuccessHandler(function(data) {
+            console.log('drawColumnChart: Received data from GAS:', JSON.parse(JSON.stringify(data)));
+
+            if (!data || data.length < 2 || (data.length > 1 && data[1].length === 0)) {
+              document.getElementById('column_chart_div').innerText = 'データがありません。(詳細チェック)';
+              console.warn('drawColumnChart: No data or insufficient data rows received.');
+              return;
+            }
+
+            try {
+              const dataTable = google.visualization.arrayToDataTable(data);
+              console.log('drawColumnChart: DataTable created successfully.');
+              console.log('drawColumnChart: DataTable numRows:', dataTable.getNumberOfRows());
+              console.log('drawColumnChart: DataTable numCols:', dataTable.getNumberOfColumns());
+
+              if (dataTable.getNumberOfRows() === 0) {
+                  document.getElementById('column_chart_div').innerText = 'グラフ用データが0行です。';
+                  console.warn('drawColumnChart: DataTable has 0 rows.');
+                  return;
+              }
+
+              if (dataTable.getNumberOfColumns() > 0) {
+                for (let i = 0; i < dataTable.getNumberOfColumns(); i++) {
+                  console.log(`drawColumnChart: Column ${i} Type: '${dataTable.getColumnType(i)}', Label: '${dataTable.getColumnLabel(i)}'`);
+                }
+              } else {
+                console.warn('drawColumnChart: DataTable has 0 columns.');
+                document.getElementById('column_chart_div').innerText = 'グラフ用データに列がありません。';
+                return;
+              }
+
+              const options = {
+                title: '販売経路ごとのカテゴリ構成',
+                isStacked: 'percent',
+                legend: { position: 'right' },
+                hAxis: { title: '販売経路' },
+                vAxis: { title: '売上構成比', format: 'percent' },
+                colors: ['#4285F4', '#DB4437', '#F4B400', '#0F9D58', '#AB47BC'], // カテゴリの色
+                bar: {
+                  groupWidth: '80%'
+                },
+                chartArea: { // チャート描画エリアの調整
+                  left: 60,    // Y軸ラベル用
+                  right: 100,  // 凡例が右にあるので、凡例スペースを確保
+                  top: 30,     // タイトル用
+                  bottom: 50,  // X軸ラベル用
+                  width: '60%' // グラフ本体の描画幅を少し狭めて、バーが間延びしないようにする
+                }
+              };
+
+              const chart = new google.visualization.ColumnChart(document.getElementById('column_chart_div'));
+
+              google.visualization.events.addListener(chart, 'error', function (err) {
+                console.error('drawColumnChart: Google Chart Error:', err.id, err.message, err.detailedMessage);
+                document.getElementById('column_chart_div').innerText = 'グラフ描画エラー: ' + err.message;
+              });
+
+              chart.draw(dataTable, options);
+              console.log('drawColumnChart: Chart.draw() called.');
+
+            } catch (e) {
+              console.error('drawColumnChart: Error processing data or drawing chart:', e);
+              document.getElementById('column_chart_div').innerText = 'グラフ準備中にエラー: ' + e.message;
+            }
+          })
+          .withFailureHandler(error => {
+            console.error('drawColumnChart: google.script.run failure:', error);
+            handleFailure(error, 'column_chart_div');
+          })
+          .getSalesChannelByCategoryData();
+      }
+
+      function drawPieChart() {
+        google.script.run
+          .withSuccessHandler(function(data) {
+            console.log('drawPieChart: Received data from GAS:', JSON.parse(JSON.stringify(data)));
+
+            if (!data || data.length < 2) {
+              document.getElementById('pie_chart_div').innerText = 'データがありません。';
+              return;
+            }
+            const dataTable = google.visualization.arrayToDataTable(data);
+
+            const options = {
+              title: '法人と個人の売上比率',
+              pieHole: 0.4, // 中心の空白の大きさ
+              is3D: true, // 3D表示にする場合
+              colors: ['#E91E63', '#673AB7'] // 法人、個人の色
+            };
+
+            const chart = new google.visualization.PieChart(document.getElementById('pie_chart_div'));
+
+            google.visualization.events.addListener(chart, 'error', function (err) {
+              console.error('drawPieChart: Google Chart Error:', err.id, err.message, err.detailedMessage);
+              document.getElementById('pie_chart_div').innerText = 'グラフ描画エラー: ' + err.message;
+            });
+
+            chart.draw(dataTable, options);
+          })
+          .withFailureHandler(error => handleFailure(error, 'pie_chart_div'))
+          .getCustomerTypeRatioData(); 
+      }
+    </script>
+  </body>
+</html>
