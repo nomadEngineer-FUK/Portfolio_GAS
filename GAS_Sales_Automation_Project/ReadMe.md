@@ -39,14 +39,14 @@ Google Charts API を利用し、集計された売上データを視覚的に�
 このプロジェクトは以下の主要なGASスクリプトおよびHTMLファイルで構成されています。
 
 * `index.html`: 売上分析グラフを表示するウェブアプリケーションのフロントエンド。
-* `config.gs`: 各種設定（シート名、ヘッダー定義、色など）をまとめた定数ファイル。
-* `excuteAllFunction.gs`: 主要な実行関数を含むファイル。
-* `spreadsheetService.gs`: スプレッドシート操作の共通ユーティリティを提供するクラス。データの読み書き、フォーマット適用などを担当。
-* `SummarySingle_Class.gs`: 単軸集計ロジックをカプセル化したクラス。
-* `SummarySingle_Code.gs`: 単軸集計のメイン処理と、`SummarySingle_Class`を使用したシート出力。
-* `SummaryCross_Class.gs`: クロス集計ロジックをカプセル化するクラス。
-* `SummaryCross_Code.gs`: クロス集計のメイン処理と、`SummaryCross_Class`を使用したシート出力。
-* `ChartsDataService.gs`: ウェブアプリ (`index.html`) から呼び出され、Google Charts用のデータを提供するGAS関数群 (`getSalesChannelByMonthData`, `getSalesChannelByCategoryData`, `getCustomerTypeRatioData` など) を含む。
+* `1_config.gs`: 各種設定（シート名、ヘッダー定義、色など）をまとめた定数ファイル。
+* `1_excuteAllFunction.gs`: 主要な実行関数を含むファイル。
+* `1_spreadsheetService.gs`: スプレッドシート操作の共通ユーティリティを提供するクラス。データの読み書き、フォーマット適用などを担当。
+* `2_SummarySingle_Class.gs`: 単軸集計ロジックをカプセル化したクラス。
+* `2_SummarySingle_Code.gs`: 単軸集計のメイン処理と、`SummarySingle_Class`を使用したシート出力。
+* `3_SummaryCross_Class.gs`: クロス集計ロジックをカプセル化するクラス。
+* `3_SummaryCross_Code.gs`: クロス集計のメイン処理と、`SummaryCross_Class`を使用したシート出力。
+* `4_ChartsDataService.gs`: ウェブアプリ (`index.html`) から呼び出され、Google Charts用のデータを提供するGAS関数群 (`getSalesChannelByMonthData`, `getSalesChannelByCategoryData`, `getCustomerTypeRatioData` など) を含む。
 
 ## セットアップ
 
